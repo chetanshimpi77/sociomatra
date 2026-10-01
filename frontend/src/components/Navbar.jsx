@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { IconMenu, IconClose, IconUser, IconChevronDown } from './icons.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import logo from '../assets/logo.jpeg'
 
 const links = [
   { to: '/', label: 'Home' },
@@ -40,15 +41,11 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b border-navy-100 bg-white/95 backdrop-blur">
       <div className="container-page flex h-[68px] items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 shrink-0">
-          <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true">
-            <rect width="32" height="32" rx="6" fill="#0f2347" />
-            <path d="M16 7l8 3.6v1.4H8v-1.4L16 7z" fill="#f0a020" />
-            <rect x="9" y="13" width="14" height="1.6" fill="#f0a020" />
-            <rect x="10" y="16" width="2" height="7" fill="#f0a020" />
-            <rect x="15" y="16" width="2" height="7" fill="#f0a020" />
-            <rect x="20" y="16" width="2" height="7" fill="#f0a020" />
-            <rect x="8" y="24" width="16" height="1.6" fill="#f0a020" />
-          </svg>
+          <img
+  src={logo}
+  alt="SocioMantra IAS Academy"
+  className="h-10 w-10 rounded-md object-contain"
+/>
           <span className="leading-tight">
             <span className="block text-lg font-extrabold text-navy-800">
               Socio<span className="text-gold-500">Mantra</span>
