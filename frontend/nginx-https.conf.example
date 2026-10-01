@@ -1,0 +1,59 @@
+# Example HTTPS config. This is NOT used automatically - nginx.conf (HTTP
+# only) is what the Dockerfile ships by default, since this repo can't
+# include real TLS certificates. To go live with HTTPS:
+#
+#   1. Point your domain's DNS A record at your server.
+#   2. Get a certificate, e.g. with Certbot (free, Let's Encrypt):
+#        sudo apt install certbot python3-certbot-nginx
+#        sudo certbot --nginx -d www.yourdomain.com -d yourdomain.com
+#      (Certbot can rewrite this file for you automatically, or you can
+#      copy this one in and fill in the paths yourself.)
+#   3. Replace frontend/nginx.conf with a version based on this file, with
+#      your real domain and certificate paths, then rebuild:
+#        docker compose up --build -d
+#   4. Certbot also sets up auto-renewal via a systemd timer/cron job -
+#      confirm it with: sudo certbot renew --dry-run
+
+server {
+    listen 80;
+    server_name www.yourdomain.com yourdomain.com;
+    # Redirect all HTTP traffic to HTTPS.
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name www.yourdomain.com yourdomain.com;
+
+    ssl_certificate     /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    add_header Strict-Transport-Security "max-age=63072000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://backend:8080/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /uploads/ {
+        proxy_pass http://backend:8080/uploads/;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+}

@@ -1,0 +1,25 @@
+# Production overrides. Activate with SPRING_PROFILES_ACTIVE=prod (already
+# set for you if you deploy via the project's docker-compose.yml).
+#
+# These are DEFAULTS that still yield to the same environment variables as
+# application.yml - e.g. EXPOSE_RESET_TOKEN=true would still override the
+# safer "false" default below. The point of this file is just to make the
+# safe choice the default once you've told the app it's running in
+# production, even if you forgot to set every individual env var.
+
+app:
+  password-reset:
+    expose-token-in-response: ${EXPOSE_RESET_TOKEN:false}
+
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    root: WARN
+    com.sociomantra.backend: INFO
+    org.hibernate.SQL: WARN

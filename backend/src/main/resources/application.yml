@@ -1,0 +1,133 @@
+server:
+  port: 8080
+  # Let in-flight requests finish (up to the timeout below) instead of being
+  # cut off mid-response when the process is asked to stop - matters for
+  # zero-downtime-ish deploys/restarts under real traffic.
+  shutdown: graceful
+  error:
+    # GlobalExceptionHandler covers normal controller errors; these settings
+    # are a second layer so Spring's own default error handling (which can
+    # kick in for errors outside controller methods) never leaks a stack
+    # trace or internal exception message to the client either.
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+
+spring:
+  application:
+    name: sociomantra-backend
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/sociomantra_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:chetan@7020}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # Sensible defaults for a small/medium site on one backend instance.
+      # Raise maximum-pool-size only alongside your MySQL max_connections -
+      # more pooled connections than the DB allows just causes contention.
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        # Batch related inserts/updates in one round-trip where possible -
+        # cheap win under concurrent write load.
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+app:
+  jwt:
+    # Change this secret before deploying to production.
+    secret: ${JWT_SECRET:sociomantra-ias-academy-super-secret-key-change-me-in-production-please}
+    expiration-ms: 86400000 # 24 hours
+
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+
+  upload:
+    # Where uploaded faculty photos / post images are stored on disk.
+    # Served back out at /uploads/** (see StaticResourceConfig).
+    dir: ${UPLOAD_DIR:uploads}
+
+  password-reset:
+    # How long a forgot-password token stays valid.
+    expiry-minutes: ${RESET_TOKEN_EXPIRY_MINUTES:30}
+    # DEV CONVENIENCE ONLY: returns the raw reset token in the API response
+    # instead of emailing it, since no email provider is wired up yet.
+    # Set to false (and add real email sending in AuthService.forgotPassword)
+    # before deploying to production. The "prod" profile below already
+    # defaults this to false.
+    expose-token-in-response: ${EXPOSE_RESET_TOKEN:true}
+
+  rate-limit:
+    # Requests allowed per IP per window, for auth + public enquiry endpoints.
+    capacity: ${RATE_LIMIT_CAPACITY:20}
+    window-seconds: ${RATE_LIMIT_WINDOW_SECONDS:60}
+
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:SocioMantra IAS Academy <no-reply@sociomantrias.com>}
+
+  oauth:
+    google:
+      client-id: ${GOOGLE_CLIENT_ID:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only ever expose /actuator/health - other actuator endpoints
+        # (env, beans, mappings, etc.) can leak internal configuration and
+        # are deliberately never turned on here.
+        include: health
+  endpoint:
+    health:
+      # Don't show dependency details (DB status, disk space, etc.) to
+      # unauthenticated callers - just UP/DOWN, enough for a load balancer
+      # or Docker healthcheck.
+      show-details: never
+
+logging:
+  level:
+    com.sociomantra.backend: INFO
+  file:
+    name: ${LOG_FILE:logs/backend.log}
+  logback:
+    rollingpolicy:
+      max-file-size: 20MB
+      max-history: 14
