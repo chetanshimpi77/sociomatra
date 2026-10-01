@@ -28,7 +28,7 @@ spring:
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/sociomantra_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:chetan@7020}
+    password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       # Sensible defaults for a small/medium site on one backend instance.
